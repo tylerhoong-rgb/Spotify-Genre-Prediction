@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lyrics to Genre</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #fafaf8;
+      --fg: #1c1c1a;
+      --muted: #6b6b66;
+      --line: #deded8;
+      --accent: #2f6f5e;
+      --bar: #cfe3dc;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #161615;
+        --fg: #ecece8;
+        --muted: #9a9a93;
+        --line: #343432;
+        --accent: #7cc4ae;
+        --bar: #29443c;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font: 16px/1.5 'Lato', system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+
+    main {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 40px 16px 64px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin: 0 0 4px;
+    }
+
+    p.sub {
+      margin: 0 0 24px;
+      color: var(--muted);
+    }
+
+    form {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type=search],
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      font: inherit;
+      color: inherit;
+      background: transparent;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+
+    textarea {
+      min-height: 140px;
+      resize: vertical;
+      margin-top: 8px;
+    }
+
+    button {
+      font: inherit;
+      padding: 10px 16px;
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      background: var(--accent);
+      color: var(--bg);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    button.link {
+      background: none;
+      color: var(--fg);
+      border-color: var(--line);
+      width: 100%;
+      text-align: left;
+      margin-top: 6px;
+    }
+
+    button.link:hover {
+      border-color: var(--accent);
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: default;
+    }
+
+    input:focus-visible,
+    textarea:focus-visible,
+    button:focus-visible,
+    summary:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 12px 0 0;
+    }
+
+    .artist {
+      color: var(--muted);
+    }
+
+    details {
+      margin-top: 20px;
+    }
+
+    summary {
+      cursor: pointer;
+      color: var(--muted);
+    }
+
+    #status {
+      margin: 16px 0 0;
+      color: var(--muted);
+      min-height: 1.5em;
+    }
+
+    #result {
+      margin-top: 28px;
+    }
+
+    #result h2 {
+      font-size: 1rem;
+      margin: 0 0 12px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 96px 1fr 52px;
+      gap: 10px;
+      align-items: center;
+      margin: 6px 0;
+    }
+
+    .track {
+      height: 14px;
+      background: var(--bar);
+      border-radius: 3px;
+    }
+
+    .fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 3px;
+      min-width: 2px;
+    }
+
+    .pct {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .words {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 2px 10px;
+      font-size: .9rem;
+    }
+
+    .chip span {
+      color: var(--muted);
+    }
+
+    footer {
+      margin-top: 48px;
+      color: var(--muted);
+      font-size: .85rem;
+    }
+
+    footer a {
+      color: inherit;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>Lyrics to genre</h1>
+    <p class="sub">Search a song and a model guesses its genre.</p>
+
+    <form id="search">
+      <input id="q" type="search" placeholder="Song title and artist" aria-label="Song title and artist"
+        autocomplete="off" required>
+      <button id="go" type="submit" disabled>Search</button>
+    </form>
+    <ul id="matches"></ul>
+
+    <details id="paste">
+      <summary>Or paste lyrics</summary>
+      <textarea id="lyrics" aria-label="Lyrics" placeholder="Paste lyrics here"></textarea>
+      <button id="predict" type="button" style="margin-top:8px" disabled>Predict</button>
+    </details>
+
+    <p id="status" role="status">Loading model…</p>
+
+    <section id="result" hidden>
+      <h2 id="what"></h2>
+      <div id="bars"></div>
+      <h2 style="margin-top:24px" id="why"></h2>
+      <div class="words" id="words"></div>
+    </section>
+
+    <footer>
+      A logistic regression on TF-IDF word features. Lyrics come from
+      <a href="https://lrclib.net">LRCLIB</a>, are analysed on your device, and are not stored or shown.
+      Genres are Spotify's broad labels.
+    </footer>
+  </main>
+
+  <script src="predict.js"></script>
+  <script>
+    (function () {
+      const $ = (id) => document.getElementById(id);
+      let model = null;
+
+      function setStatus(msg) { $("status").textContent = msg; }
+
+      fetch("model.json")
+        .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then((j) => {
+          model = GenrePredictor.prepare(j);
+          $("go").disabled = false;
+          $("predict").disabled = false;
+          setStatus("");
+        })
+        .catch(() => setStatus("Could not load the model file."));
+
+      function show(heading, lyrics) {
+        const res = GenrePredictor.predict(model, lyrics);
+        if (!res) {
+          $("result").hidden = true;
+          setStatus("No words in these lyrics matched the model's vocabulary.");
+          return;
+        }
+        setStatus("");
+        $("what").textContent = heading;
+        const bars = $("bars"); bars.replaceChildren();
+        for (const r of res.ranked.slice(0, 3)) {
+          const row = document.createElement("div"); row.className = "row";
+          const name = document.createElement("div"); name.textContent = r.genre;
+          const track = document.createElement("div"); track.className = "track";
+          const fill = document.createElement("div"); fill.className = "fill"; fill.style.width = (r.p * 100).toFixed(1) + "%";
+          track.appendChild(fill);
+          const pct = document.createElement("div"); pct.className = "pct"; pct.textContent = (r.p * 100).toFixed(1) + "%";
+          row.append(name, track, pct); bars.appendChild(row);
+        }
+        const top = res.ranked[0];
+        $("why").textContent = "Words pushing toward " + top.genre;
+        const words = $("words"); words.replaceChildren();
+        for (const w of res.topWords(top.c)) {
+          if (w.weight <= 0) continue;
+          const chip = document.createElement("div"); chip.className = "chip";
+          chip.append(w.word + " ");
+          const num = document.createElement("span"); num.textContent = "+" + w.weight.toFixed(2);
+          chip.appendChild(num); words.appendChild(chip);
+        }
+        $("result").hidden = false;
+      }
+
+      $("search").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const q = $("q").value.trim();
+        if (!q || !model) return;
+        $("matches").replaceChildren(); $("result").hidden = true;
+        setStatus("Searching…");
+        let tracks;
+        try {
+          const r = await fetch("https://lrclib.net/api/search?q=" + encodeURIComponent(q));
+          if (!r.ok) throw new Error(r.status);
+          tracks = await r.json();
+        } catch (err) {
+          setStatus("Could not reach the lyrics service. You can paste the lyrics below instead.");
+          $("paste").open = true;
+          return;
+        }
+        tracks = tracks.filter((t) => t.plainLyrics && !t.instrumental).slice(0, 8);
+        if (!tracks.length) { setStatus("No songs with lyrics found. Try title and artist."); return; }
+        setStatus("Pick a song:");
+        for (const t of tracks) {
+          const li = document.createElement("li");
+          const b = document.createElement("button"); b.type = "button"; b.className = "link";
+          b.append(t.trackName + " ");
+          const a = document.createElement("span"); a.className = "artist"; a.textContent = "· " + t.artistName;
+          b.appendChild(a);
+          b.addEventListener("click", () => show(t.trackName + " · " + t.artistName, t.plainLyrics));
+          li.appendChild(b); $("matches").appendChild(li);
+        }
+      });
+
+      $("predict").addEventListener("click", () => {
+        const text = $("lyrics").value.trim();
+        if (!text) { setStatus("Paste some lyrics first."); return; }
+        show("Pasted lyrics", text);
+      });
+    })();
+  </script>
+</body>
+
+</html>
