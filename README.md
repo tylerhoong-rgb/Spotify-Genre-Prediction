@@ -9,9 +9,11 @@ I created two models: a baseline complement Naive Bayes and a Logistic Regressio
 
 A website where you can test the model by looking up a song or pasting lyrics is at: https://tylerhoong-rgb.github.io/Spotify-Genre-Prediction/
 
-## Results and Questions for Future Study
+## Results, Takeaways, and Questions for Future Study
 Naive Bayes Roc_Auc: 81.3%
 Logistic Regression Roc_Auc: 84.3%
+
+Covers are songs sung by another artist than the original, changing the style and sometimes genre of the song. A way to deal with this for the data would be to edit the similarity detector to not filter by artist and remove covers. However, this would not actually solve the issue, just remove it from the dataset used for the model. Training on prosodic features of the song lyrics would help differentiate covers and solve this issue, but this data is not available in this dataset.
 
 There is another variable in the data, `niche_genre`, that is more varied than `genre`. It is also treated as a list in the data, so 1 song can have multiple of these sub-genres. This would make for an interesting follow-up project.
 
